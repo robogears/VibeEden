@@ -138,6 +138,18 @@ bool UpdateDialog::DownloadAssetTo(const QString& dest_path, bool require_verifi
 
 #ifdef YUZU_BUNDLED_OPENSSL
     client->load_ca_cert_store(kCert, sizeof(kCert));
+#elif defined(__linux__)
+    // The AppImage bundles its own OpenSSL whose compiled-in cert directory (/usr/lib/ssl) does not
+    // exist on SteamOS, so without this the download's TLS handshake fails to verify. Point the
+    // client at the host CA bundle from a list of well-known locations.
+    for (const char* ca : {"/etc/ssl/certs/ca-certificates.crt", "/etc/pki/tls/certs/ca-bundle.crt",
+                           "/etc/ssl/ca-bundle.pem", "/etc/ssl/cert.pem",
+                           "/etc/ca-certificates/extracted/tls-ca-bundle.pem"}) {
+        if (QFile::exists(QString::fromLatin1(ca))) {
+            client->set_ca_cert_path(ca);
+            break;
+        }
+    }
 #endif
 
     auto progress =

@@ -1,16 +1,18 @@
-# VibeEden v0.2.2
+# VibeEden v0.2.3
 
-A small but important fix to the in-app updater.
+The companion fix to v0.2.2 - the in-app updater now works inside the AppImage on the Steam Deck.
 
 ## What's fixed
-- **"Check for Updates" now works.** The update check sent its request to GitHub without a
-  `User-Agent` header, which GitHub's API rejects with HTTP 403 - so every check failed with
-  "Could not check for updates. Please check your internet connection and try again," even when you
-  were online. VibeEden now sends a proper `User-Agent` on both the update check and the download.
+- **"Check for Updates" connects on SteamOS now.** v0.2.2 fixed the missing `User-Agent`, but the
+  AppImage bundles its own copy of OpenSSL whose CA-certificate directory is hard-set to a path that
+  does not exist on SteamOS - so the HTTPS connection to GitHub could not be verified and the check
+  still failed with "could not check for updates." VibeEden now points its updater at the system CA
+  bundle (`/etc/ssl/certs/...`, with fallbacks), so both the update check and the download verify
+  correctly inside the AppImage.
 
-> **One-time manual step for v0.2.1 users:** v0.2.1's checker is the broken one, so it can't fetch
-> this update by itself. Download `Eden.AppImage` below once and replace your existing AppImage -
-> from v0.2.2 on, every release updates itself automatically.
+> **One-time manual step for v0.2.1 / v0.2.2 users:** those builds can't fetch this update on their
+> own (their checker is the broken one). Download `Eden.AppImage` below once and replace your
+> existing AppImage - from v0.2.3 on, every release updates itself automatically.
 
 ## Install
 - **Steam Deck / Linux**: download `Eden.AppImage`, mark it executable (`chmod +x Eden.AppImage`),
@@ -25,4 +27,4 @@ A small but important fix to the in-app updater.
 
 ---
 
-**Full Changelog**: https://github.com/robogears/VibeEden/compare/v0.2.1...v0.2.2
+**Full Changelog**: https://github.com/robogears/VibeEden/compare/v0.2.2...v0.2.3

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include <optional>
+#include <filesystem>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/algorithm/string/split.hpp>
@@ -237,6 +238,20 @@ std::optional<std::string> MakeRequest(const std::string& url, const std::string
 
 #ifdef YUZU_BUNDLED_OPENSSL
         client->load_ca_cert_store(kCert, sizeof(kCert));
+#elif defined(__linux__)
+        // The AppImage bundles its own OpenSSL whose compiled-in cert directory (/usr/lib/ssl) does
+        // not exist on SteamOS, so TLS verification fails and this request returns null ("could not
+        // check for updates"). Point the client at the host CA bundle from well-known locations.
+        for (const char* ca : {"/etc/ssl/certs/ca-certificates.crt",
+                               "/etc/pki/tls/certs/ca-bundle.crt", "/etc/ssl/ca-bundle.pem",
+                               "/etc/ssl/cert.pem",
+                               "/etc/ca-certificates/extracted/tls-ca-bundle.pem"}) {
+            std::error_code ec;
+            if (std::filesystem::exists(ca, ec)) {
+                client->set_ca_cert_path(ca);
+                break;
+            }
+        }
 #endif
 
         if (client == nullptr) {
