@@ -15,6 +15,7 @@
 #include <QTemporaryDir>
 #include <qdesktopservices.h>
 #include "common/logging.h"
+#include "common/scm_rev.h"
 #include "qt_common/abstract/frontend.h"
 #include "qt_common/abstract/progress.h"
 #include "ui_update_dialog.h"
@@ -129,6 +130,11 @@ bool UpdateDialog::DownloadAssetTo(const QString& dest_path, bool require_verifi
     client->set_connection_timeout(connect_timeout_seconds);
     client->set_read_timeout(transfer_timeout_seconds);
     client->set_write_timeout(transfer_timeout_seconds);
+
+    // GitHub rejects requests without a User-Agent (HTTP 403); set one as a default header so it is
+    // sent on the initial request and any followed redirect to the asset CDN.
+    client->set_default_headers(
+        {{"User-Agent", std::string("VibeEden/") + Common::g_build_version}});
 
 #ifdef YUZU_BUNDLED_OPENSSL
     client->load_ca_cert_store(kCert, sizeof(kCert));

@@ -228,6 +228,13 @@ std::optional<std::string> MakeRequest(const std::string& url, const std::string
         client->set_read_timeout(timeout_seconds);
         client->set_write_timeout(timeout_seconds);
 
+        // GitHub's REST API returns HTTP 403 ("please make sure your request has a User-Agent
+        // header") to any request without a User-Agent, and cpp-httplib does not add a default one.
+        // Set it as a default header so it is also sent on followed redirects. Without this the
+        // update check always fails with "could not check for updates" even when online.
+        client->set_default_headers(
+            {{"User-Agent", fmt::format("VibeEden/{}", Common::g_build_version)}});
+
 #ifdef YUZU_BUNDLED_OPENSSL
         client->load_ca_cert_store(kCert, sizeof(kCert));
 #endif
