@@ -33,7 +33,7 @@ endif()
 # VibeEden fork version: drives the in-app updater's comparison against the
 # robogears/VibeEden GitHub releases. Bump per release, or override with -DVIBEEDEN_VERSION=x.y.z.
 if (NOT DEFINED VIBEEDEN_VERSION)
-    set(VIBEEDEN_VERSION "0.2.3")
+    set(VIBEEDEN_VERSION "0.2.4")
 endif()
 set(BUILD_VERSION "${VIBEEDEN_VERSION}")
 set(IS_DEV_BUILD false)
