@@ -29,6 +29,7 @@ jobs:
             glslang-tools desktop-file-utils libfuse2t64 \
             libssl-dev zlib1g-dev libvulkan-dev \
             libx11-dev libxext-dev libxkbcommon-dev libxkbcommon-x11-dev \
+            libxcursor-dev libxi-dev libxrandr-dev libxinerama-dev libxfixes-dev libxss-dev libxtst-dev libxxf86vm-dev libxrender-dev libdecor-0-dev \
             libxcb1-dev libxcb-icccm4-dev libxcb-image0-dev libxcb-keysyms1-dev libxcb-render-util0-dev \
             libxcb-xinerama0-dev libxcb-xkb-dev libxcb-util-dev libxcb-cursor-dev \
             libgl1-mesa-dev libglu1-mesa-dev mesa-common-dev libegl1-mesa-dev \
