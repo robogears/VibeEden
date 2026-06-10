@@ -42,7 +42,7 @@ It's written in C++ with portability in mind, with builds for Windows, Linux, ma
 
 ---
 
-## VibeEden — Steam Deck controller rework
+
 
 ## Disclaimer
 
@@ -52,6 +52,7 @@ There may be bugs, messy parts, unfinished features, or security issues.
 
 Use it at your own risk. Review and test it before using it for anything important.
 
+## VibeEden — Steam Deck controller rework
 
 **VibeEden** is a **VIBE CODED** Steam-Deck-focused fork of Eden. Stock Switch emulators make you assign a physical device to every player and remap buttons by hand — clumsy on a Deck, where **Steam already manages controllers**. VibeEden replaces that flow so controllers *just work* under SteamOS.
 
