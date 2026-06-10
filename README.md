@@ -19,34 +19,10 @@
 It's written in C++ with portability in mind, with builds for Windows, Linux, macOS, Android, FreeBSD and more.
 </h4>
 
-<p align="center">
-    </a>
-    <a href="https://discord.gg/HstXbPch7X">
-        <img src="https://img.shields.io/discord/1367654015269339267?color=5865F2&label=Eden&logo=discord&logoColor=white"
-            alt="Discord">
-    </a>
-    <a href="https://stt.gg/qKgFEAbH">
-        <img src="https://img.shields.io/revolt/invite/qKgFEAbH?color=d61f3a&label=Stoat"
-            alt="Stoat">
-    </a>
-</p>
-
-<p align="center">
-  <a href="#compatibility">Compatibility</a> |
-  <a href="#development">Development</a> |
-  <a href="#building">Building</a> |
-  <a href="#download">Download</a> |
-  <a href="#support">Support</a> |
-  <a href="#license">License</a>
-</p>
-
----
-
-
 
 ## Disclaimer
 
-This app was **vibecoded**, so the code may not be perfect.
+This fork was **vibecoded**, so the code may not be perfect.
 
 There may be bugs, messy parts, unfinished features, or security issues.
 
