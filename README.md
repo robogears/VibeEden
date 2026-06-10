@@ -44,7 +44,7 @@ It's written in C++ with portability in mind, with builds for Windows, Linux, ma
 
 ## VibeEden — Steam Deck controller rework
 
-**VibeEden** is a Steam-Deck-focused fork of Eden. Stock Switch emulators make you assign a physical device to every player and remap buttons by hand — clumsy on a Deck, where **Steam already manages controllers**. VibeEden replaces that flow so controllers *just work* under SteamOS.
+**VibeEden** is a **VIBE CODED** Steam-Deck-focused fork of Eden. Stock Switch emulators make you assign a physical device to every player and remap buttons by hand — clumsy on a Deck, where **Steam already manages controllers**. VibeEden replaces that flow so controllers *just work* under SteamOS.
 
 ### Controllers follow Steam, automatically
 - **Steam owns the order.** Whatever order Steam assigns your controllers (Steam Input's *Rearrange Controllers* / player index) is exactly the order VibeEden binds them — the pad in Steam slot 1 becomes Player 1, slot 2 becomes Player 2, and so on. No per-player device pickers.
