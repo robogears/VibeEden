@@ -1,0 +1,139 @@
+name: AppImage
+
+# Builds the Linux/Steam Deck Eden.AppImage on a GitHub-hosted runner (ubuntu-24.04 == the build
+# environment this recipe was proven on). On a tag push (vX.Y.Z) it also creates the GitHub release
+# and attaches Eden.AppImage. On a manual run it just uploads the AppImage as an artifact, so the
+# build can be validated before tagging a release.
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write   # needed for the release-publish step on tag pushes
+
+jobs:
+  appimage:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y --no-install-recommends \
+            build-essential ninja-build pkg-config autoconf automake libtool nasm patch curl git ca-certificates \
+            glslang-tools desktop-file-utils libfuse2t64 \
+            libssl-dev zlib1g-dev libvulkan-dev \
+            libx11-dev libxext-dev libxkbcommon-dev libxkbcommon-x11-dev \
+            libxcb1-dev libxcb-icccm4-dev libxcb-image0-dev libxcb-keysyms1-dev libxcb-render-util0-dev \
+            libxcb-xinerama0-dev libxcb-xkb-dev libxcb-util-dev libxcb-cursor-dev \
+            libgl1-mesa-dev libglu1-mesa-dev mesa-common-dev libegl1-mesa-dev \
+            libwayland-dev libpulse-dev libasound2-dev \
+            libudev-dev libhidapi-dev libusb-1.0-0-dev libva-dev libvdpau-dev \
+            libavcodec-dev libavfilter-dev libswscale-dev libavutil-dev libavformat-dev \
+            libboost-dev libboost-context-dev libboost-fiber-dev \
+            libfmt-dev liblz4-dev libzstd-dev nlohmann-json3-dev libopus-dev libenet-dev
+
+      - name: Install CMake 3.31.12
+        run: |
+          # The repo requires cmake_minimum_required(VERSION 3.31); Ubuntu 24.04 ships 3.28, and
+          # CMake 4.x breaks some CPM deps - so pin the exact version the local build uses.
+          curl -sSL -o /tmp/cmake.tgz https://github.com/Kitware/CMake/releases/download/v3.31.12/cmake-3.31.12-linux-x86_64.tar.gz
+          sudo tar --strip-components=1 -xzf /tmp/cmake.tgz -C /usr/local
+          cmake --version
+
+      - name: Cache CPM packages
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/.cache/cpm
+          key: cpm-${{ runner.os }}-${{ hashFiles('cpmfile.json', 'externals/cpmfile.json') }}
+          restore-keys: |
+            cpm-${{ runner.os }}-
+
+      - name: Configure
+        run: |
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+            -DYUZU_TESTS=OFF \
+            -DYUZU_USE_BUNDLED_QT=ON \
+            -DENABLE_UPDATE_CHECKER=ON \
+            -DCPM_SOURCE_CACHE="${{ github.workspace }}/.cache/cpm"
+
+      - name: Build
+        run: cmake --build build
+
+      - name: Fetch AppImage tooling
+        run: |
+          mkdir -p "$RUNNER_TEMP/aitools"
+          cd "$RUNNER_TEMP/aitools"
+          base_ld=https://github.com/linuxdeploy
+          curl -fsSL -o linuxdeploy           $base_ld/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+          curl -fsSL -o linuxdeploy-plugin-qt $base_ld/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage
+          curl -fsSL -o appimagetool          https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
+          curl -fsSL -o runtime-x86_64        https://github.com/AppImage/type2-runtime/releases/download/continuous/runtime-x86_64
+          chmod +x linuxdeploy linuxdeploy-plugin-qt appimagetool
+
+      - name: Package AppImage
+        env:
+          APPIMAGE_EXTRACT_AND_RUN: "1"   # runners have no FUSE; run the tool AppImages extracted
+        run: |
+          set -euo pipefail
+          APPDIR="$PWD/AppDir"
+          rm -rf "$APPDIR"; mkdir -p "$APPDIR"
+          DESTDIR="$APPDIR" cmake --install build --prefix /usr 2>&1 | tail -5
+
+          # Write a clean .desktop (linuxdeploy's parser rejects the repo's leading SPDX comments).
+          DESKTOP="$APPDIR/usr/share/applications/dev.eden_emu.eden.desktop"
+          mkdir -p "$(dirname "$DESKTOP")"
+          printf '%s\n' \
+            '[Desktop Entry]' \
+            'Type=Application' \
+            'Version=1.0' \
+            'Name=Eden' \
+            'GenericName=Switch Emulator' \
+            'Comment=Nintendo Switch emulator (VibeEden) - Steam Deck controller auto-mapping' \
+            'Icon=dev.eden_emu.eden' \
+            'Exec=eden %f' \
+            'Categories=Game;Emulator;' \
+            'Keywords=Nintendo;Switch;' \
+            'StartupWMClass=eden' > "$DESKTOP"
+
+          # Point linuxdeploy-plugin-qt at the CPM-bundled Qt (version-agnostic glob).
+          QTDIR="$(ls -d "$PWD"/.cache/cpm/qt6/linux-amd64-*/ | sort -V | tail -1)"
+          QTDIR="${QTDIR%/}"
+          echo "Using bundled Qt at: $QTDIR"
+          export QMAKE="$QTDIR/bin/qmake"
+          export LD_LIBRARY_PATH="$QTDIR/lib:${LD_LIBRARY_PATH:-}"
+          export PATH="$RUNNER_TEMP/aitools:$PATH"
+
+          ICON="$APPDIR/usr/share/icons/hicolor/scalable/apps/dev.eden_emu.eden.svg"
+          linuxdeploy \
+            --appdir "$APPDIR" \
+            --executable "$APPDIR/usr/bin/eden" \
+            --desktop-file "$DESKTOP" \
+            --icon-file "$ICON" \
+            --plugin qt
+
+          ARCH=x86_64 appimagetool --runtime-file "$RUNNER_TEMP/aitools/runtime-x86_64" "$APPDIR" Eden.AppImage
+          chmod +x Eden.AppImage
+          ls -la Eden.AppImage
+
+      - name: Upload AppImage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Eden-AppImage
+          path: Eden.AppImage
+          if-no-files-found: error
+
+      - name: Publish release (tag pushes only)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          name: VibeEden ${{ github.ref_name }}
+          body_path: RELEASE_NOTES.md
+          files: Eden.AppImage
+          make_latest: true
